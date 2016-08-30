@@ -1,3 +1,5 @@
+[首页](index)
+
 # HDFS 
 
 ## A. ha dfs 初始化和启动

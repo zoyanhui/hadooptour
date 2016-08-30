@@ -1,3 +1,5 @@
+[首页](index)
+
 ## 添加DataNode
 对于新添加的DataNode节点，需要启动datanode进程，从而将其添加入集群
 1. 在新增的节点上，运行sbin/hadoop-daemon.sh start datanode即可
