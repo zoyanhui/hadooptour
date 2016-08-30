@@ -1,3 +1,5 @@
+[首页](index)
+
 # HDFS
 > hadoop 的基础分布式文件存储系统，分为NameNode和DataNode. 
 > NameNode负责存储文件系统的metadata，管理DataNode的数据存储和数据安全
