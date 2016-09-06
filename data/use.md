@@ -94,6 +94,71 @@
 
       实际上是对缓存的数据做了一个备份，代价非常高，一般不建议使用。
 
-* 结语
 
-      spark的优化方法还有很多，这篇文章主要从使用的角度讲解了常用的优化方法，具体的使用方法可以参考博主的其他优化文章。
+
+### C. SparkSql优化配置
+
+* Caching Data In Memory
+> Spark SQL can cache tables using an in-memory columnar format by calling `spark.cacheTable("tableName")` or `dataFrame.cache()`. Then Spark SQL will scan only required columns and will automatically tune compression to minimize memory usage and GC pressure. You can call `spark.uncacheTable("tableName")` to remove the table from memory.
+Configuration of in-memory caching can be done using the setConf method on SparkSession or by running SET key=value commands using SQL.
+
+    - spark.sql.inMemoryColumnarStorage.compressed
+    default: true
+    > When set to true Spark SQL will automatically select a compression codec for each column based on statistics of the data.
+
+    - spark.sql.inMemoryColumnarStorage.batchSize
+    default: 10000
+    > Controls the size of batches for columnar caching. Larger batch sizes can improve memory utilization and compression, but risk OOMs when caching data.
+
+* spark.sql.files.maxPartitionBytes  
+default: 134217728 (128 MB)
+> The maximum number of bytes to pack into a single partition when reading files.
+
+* spark.sql.files.openCostInBytes
+default: 4194304 (4 MB)
+> The estimated cost to open a file, measured by the number of bytes could be scanned in the same time. This is used when putting multiple files into a partition. It is better to over estimated, then the partitions with small files will be faster than partitions with bigger files (which is scheduled first).
+
+* spark.sql.autoBroadcastJoinThreshold
+default: 10485760 (10 MB)
+> Configures the maximum size in bytes for a table that will be broadcast to all worker nodes when performing a join. By setting this value to -1 broadcasting can be disabled. Note that currently statistics are only supported for Hive Metastore tables where the command ANALYZE TABLE <tableName> COMPUTE STATISTICS noscan
+ has been run.
+
+* spark.sql.shuffle.partitions
+default: 200
+> Configures the number of partitions to use when shuffling data for joins or aggregations.
+  - 自动决定join和groupby时reducer的数量。 如果使用默认200配置，可能出现，sparksql的reduce task总是200个的情况，导致insert into hive的文件数量也是200个，容易造成小文件过多
+  -  如果partitions数目过少，容易出现shuffle内存超限。org.apache.spark.shuffle.MetadataFetchFailedException: Missing an output location for shuffle
+
+
+### D. Spark Sql unsupported (Spark 1.6.2)
+* Tables with buckets: bucket is the hash partitioning within a Hive table partition. Spark SQL doesn’t support buckets yet.
+* UNION type
+* Unique join
+* Column statistics collecting: Spark SQL does not piggyback scans to collect column statistics at the moment and only supports populating the sizeInBytes field of the hive metastore
+* File format for CLI: For results showing back to the CLI, Spark SQL only supports TextOutputFormat.
+* Hadoop archive
+* Block level bitmap indexes and virtual columns (used to build indexes)
+* Automatically determine the number of reducers for joins and groupbys: Currently in Spark SQL, you need to control the degree of parallelism post-shuffle using “SET spark.sql.shuffle.partitions=[num_tasks];”.
+* Meta-data only query: For queries that can be answered by using only meta data, Spark SQL still launches tasks to compute the result.
+* Skew data flag: Spark SQL does not follow the skew data flags in Hive.
+* STREAMTABLE hint in join: Spark SQL does not follow the STREAMTABLE hint.
+* Merge multiple small files for query results: if the result output contains multiple small files, Hive can optionally merge the small files into fewer large files to avoid overflowing the HDFS metadata. Spark SQL does not support that.
+
+
+### E.spark executor memory
+spark.storage.memoryFraction   
+ - this would allow cache use more of allocated memory
+大多数情况下，cache memory可以松动，在保证运行内存和shuffle内存的情况下，满足cache的要求。否则，可以采用 内存+硬盘的 缓存方式，来解决内存不够分配缓存的情况。
+
+spark.shuffle.memoryFraction=0.5
+ - this would allow shuffle use more of allocated memory
+
+spark.yarn.executor.memoryOverhead=1024
+ - this is set in MB. Yarn kills executors when its memory usage is larger then (executor-memory + executor.memoryOverhead)
+
+**Little more info**
+- If you get shuffle not found exception.
+In case of org.apache.spark.shuffle.MetadataFetchFailedException: Missing an output location for shuffle
+ you should increase spark.shuffle.memoryFraction, for example to 0.5.
+
+- Most common reason for Yarn killing off my executors was memory usage beyond what it expected. To avoid that you increase spark.yarn.executor.memoryOverhead, I've set it to 1024, even if my executors use only 2-3G of memory.
