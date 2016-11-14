@@ -7,6 +7,7 @@
 * [运维篇](op)
 * [应用篇](use)
 * [错误篇](error)
+* [Hive使用优化篇](use-hive)
 
 
 ## continue
