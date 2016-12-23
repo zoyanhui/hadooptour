@@ -48,7 +48,7 @@
 1. RM
 > [`ResourceManager`](http://hortonworks.com/blog/apache-hadoop-YARN-resourcemanager/)是YARN资源控制框架的中心模块，负责集群中所有的资源的统一管理和分配。它接收来自NM的汇报，建立AM，并将资源派送给AM. 
 
-![RM](http://upload-images.jianshu.io/upload_images/2716069-1876c7a82e909365.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![RM](imgs/rm.png)
 
   - **调度器概览**
 最初的hadoop的版本只有FifoScheduler（先进先出调度器）。
@@ -57,7 +57,7 @@
     1. 内存中都会维护一个队列，应用，NM，Container的关系。
     2. 事件处理器，通过RM的异步的事件调用机制知晓外部的发生的事情。要跟外部交互也要发送相应的事件。调度器一共要处理6个调度事件
         
-       ![Schedule events](http://upload-images.jianshu.io/upload_images/2716069-83adc9264566507a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+       ![Schedule events](imgs/schedule-events.png)
 
       除了这6个事件，还有一个函数会在AM跟RM心跳的时候会被调用。
 Allocation allocate(ApplicationAttemptId appAttemptId,List<ResourceRequest> ask,List<ContainerId> release);
@@ -89,7 +89,7 @@ RM每次分配，先获取一个资源队列，从队列中获取一个job，然
 
        *容量调度器的参数计算关系*
 在RM的管理界面参数：
-![容量调度参数](http://upload-images.jianshu.io/upload_images/2716069-6a28731921b62bfa.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![容量调度参数](imgs/capacity-params.png)
 ```
 队列绝对容量=父队列的 队列绝对容量*队列容量 
 队列最大容量=yarn.scheduler.capacity.<queue-path>.maximum-capacity/100 
@@ -123,7 +123,7 @@ AM资源占比（AM可占用队列资源最大的百分比)
         6) **延迟调度:**每种资源申请的优先级都有一个资源等级标记。一开始标记都是NODE_LOCAL，只允许本地调度。如果调度机会大于NM数量乘以上界（locality.threshold.node），资源等级转变为RACK_LOCAL、重置调度机会为0、接受机架调度。如果调度机会再次大于NM数量乘以上界（locality.threshold.rack），资源等级转变为OFF_SWITCH、重置调度机会为0、接受任意调度。详情代码参看*[FSSchedulerApp.getAllowedLocalityLevel:470]*
         7) **资源抢占:**调度器会使用公平资源共享算法计算每个队列应该得到的资源总量。如果一个队列长时间得不到应得到的资源量，调度器可能会杀死占用掉该部分资源的容器。
     *配置:* fair-scheduler.xml  
-![fair-scheduler.xml公平调度配置](http://upload-images.jianshu.io/upload_images/2716069-c7536e7e6733c630.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![fair-scheduler.xml公平调度配置](imgs/fair-schedule.png)
 
     *公平排序算法:*
 公平排序算法是公平调度器的核心算法。调度器在选取哪个队列和队列中的哪个应用需要优先得到资源调度的时候使用。每个队列或者应用都有以下几个供排序的参数：
@@ -166,7 +166,7 @@ AM资源占比（AM可占用队列资源最大的百分比)
 
     *公平调度器的全局配置:*
 
-![公平调度器的全局配置](http://upload-images.jianshu.io/upload_images/2716069-8d913e029617b9d9.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![公平调度器的全局配置](imgs/fair-schedule-global.png)
 
 
 
