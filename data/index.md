@@ -5,9 +5,9 @@
 * [环境生态篇](env)
 * [集群篇](cluster)
 * [运维篇](op)
-* [应用篇](use)
 * [错误篇](error)
-* [Hive使用优化篇](use-hive)
+* [Spark篇](spark:use)
+* [Hive篇](hive:hive-index)
 
 
 ## continue

@@ -1,4 +1,4 @@
-[首页](index)
+[Hive首页](hive:hive-index)
 
 > 针对Hive的优化主要有以下几个方面：
   1. map
@@ -9,11 +9,11 @@
   6. job chain
 
 
-![Paste_Image.png](http://upload-images.jianshu.io/upload_images/2716069-80b84e7d0f0cb9a3.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Hive job 分解](imgs/hive/hivejob.png)
 
 Hive map reduce 的过程如下：
 
-![Paste_Image.png](http://upload-images.jianshu.io/upload_images/2716069-9f1803da430d3e62.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![Hive map-reduce](http://upload-images.jianshu.io/upload_images/2716069-9f1803da430d3e62.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 
 
 # Map 阶段优化
@@ -221,7 +221,7 @@ snappy跟lzo同属于Lempel–Ziv 压缩算法家族，但是优于lzo的两点�
   1）Snappy解压缩比 LZO 更快, 压缩速度相当, meaning the[total round-trip time is superior](https://github.com/ning/jvm-compressor-benchmark/wiki).
   2)  Snappy 是 BSD-licensed, 可以集成在 Hadoop。 LZO 是 GPL-licensed, 需要单独安装。
 通常集群会使用lzo做map reduce的中间结果压缩，中间结果是用户不可见的，一般是mapper写入磁盘，并供reducer读取。中间结果对压缩友好，一是key有冗余，而是需要写入磁盘，压缩减少IO量。同时，lzo和snappy都不是CPU密集的压缩算法，不会造成map，reduce的CPU时间缺乏。 而且snappy的效率比lzo要高20%。
-![Paste_Image.png](http://upload-images.jianshu.io/upload_images/2716069-92ba1a0c5799d7ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![压缩算法比较](http://upload-images.jianshu.io/upload_images/2716069-92ba1a0c5799d7ad.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 需要注意的一点是，Snappy旨在与容器格式（例如序列文件或Avro数据文件）一起使用，而不是直接在纯文本上使用，因为后者不可拆分(not splittable)，无法处理并行使用MapReduce。 这不同于LZO，其中可以索引LZO压缩文件以确定分裂点，使得LZO文件可以在后续处理中被有效地处理。
 如图，.snappy与.lzo都不是splittable的，lzo可以通过创建index文件弥补，snappy适合用在序列文件( Sequence Files)上，比如常用的在map阶段的输出，如下：
 **使用**
@@ -422,7 +422,7 @@ Group过程倾斜，还可以开启`hive.groupby.skewindata=true`来改善，这
     1. `map join`可以解决大表join小表时候的数据倾斜
     2. `skew join`是hive中对数据倾斜的一个解决方案，`set hive.optimize.skewjoin = true;`
         > 根据`hive.skewjoin.key`（默认100000）设置的数量hive可以知道超过这个值的key就是特殊key值。对于特殊的key，reduce过程直接跳过，最后再启用新的map-reduce过程来处理。
-![Paste_Image.png](http://upload-images.jianshu.io/upload_images/2716069-a89009a3e062fe4a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
+![数据倾斜](http://upload-images.jianshu.io/upload_images/2716069-a89009a3e062fe4a.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240)
 业务数据本身的倾斜，可以从业务数据特点本身出发，通过设置reduce数量等方式，来避免倾斜
 
 
